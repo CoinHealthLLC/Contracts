@@ -1,57 +1,55 @@
 pragma solidity ^0.4.16;
 /**
  * @title Shareable Ownership
- * @author RHendricks
  * @dev Modification of the standard Ownable contract to allow
  * a patient owner to assign a physician owner to share contract.
  */
 
-
 contract ShareableOwnership {
 
-	address public patientOwner;    // address of Patient
-	address public physicianOwner;  // address of Physician
-	address public pendingOwner;    // address of Pending Physician
+    address public patientOwner;    // address of Patient
+    address public physicianOwner;  // address of Physician
+    address public pendingSharedOwner;    // address of Pending Physician
     
     // @dev creator of contract is Patient
-	function Ownable() {
+    function Ownable() internal {
         patientOwner = msg.sender;
     }
-	
+
     // @dev only the patient owner or physician owner can modify
-	modifier onlyOwner(){
-		if (msg.sender == patientOwner || msg.sender == physicianOwner) {
-			_;
-		}
-	}
+    modifier onlySharedOwner() {
+        if (msg.sender == patientOwner || msg.sender == physicianOwner) {
+            _;
+        } else {
+            revert();
+        }
+    }
 
     // @dev Allows current physician or patient to change Physician ownership
     // @param _pendingOwner Address of physician for transfer of shared ownership
     // @return whether the modification was successful
-    function editPhysician(address _pendingOwner) onlyOwner() returns(bool) {
-        if (_pendingOwner == 0x0) {
+    function editPhysician(address _pendingSharedOwner) onlySharedOwner() returns(bool) {
+        if (_pendingSharedOwner == 0x0) {
             return false;
         }
-	    pendingOwner = _pendingOwner;
+        pendingSharedOwner = _pendingSharedOwner;
         return true;
     }
 
     // @dev pending Physician owner must claim ownership to complete transfer
     // @returns whether the claim was successful
-	function claimOwnPhysician() returns(bool) {
-		if (pendingOwner != msg.sender) {
+    function acceptSharedOwnership() returns(bool) {
+        if (pendingSharedOwner != msg.sender) {
             return false;
         }
-
-        physicianOwner = pendingOwner;
-        delete pendingOwner;
-
+        physicianOwner = pendingSharedOwner;
+        delete pendingSharedOwner;
         return true;
     }
 
     // @dev function to destroy contract during development 
     // @dev this helps minimize garbage on the network
-	function destroy() onlyOwner {
+    function destroy() public onlySharedOwner {
         selfdestruct(patientOwner);
     }
 }
