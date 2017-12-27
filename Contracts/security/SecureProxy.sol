@@ -1,4 +1,4 @@
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.17;
 
 
 contract iRecordStorageProxy { //The patients proxy needs to be reengineered 
